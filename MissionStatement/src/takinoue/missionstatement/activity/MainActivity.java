@@ -2,16 +2,21 @@
 package takinoue.missionstatement.activity;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import takinoue.missionstatement.R;
 import takinoue.missionstatement.bean.MissionStatementBean;
 import takinoue.missionstatement.helper.DBHelper;
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MotionEvent;
-import android.widget.TextView;
 import android.view.animation.AlphaAnimation;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
@@ -39,6 +44,9 @@ public class MainActivity extends Activity {
         // 人名
         TextView personTextView = (TextView) findViewById(R.id.personTextView);
         personTextView.setText(missionStatementBean.getPerson());
+
+        // 定時に画面を起動するための処理
+        setTimer();
     }
 
     @Override
@@ -48,6 +56,9 @@ public class MainActivity extends Activity {
         return true;
     }
 
+    /**
+     * タップされた時の処理.
+     */
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
@@ -82,6 +93,32 @@ public class MainActivity extends Activity {
         }
 
         return super.onTouchEvent(event);
+    }
+
+    /**
+     * 定時に画面を起動するための処理.
+     */
+    private void setTimer() {
+
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+
+        // 起動する時刻のCalendar(15:00:00)
+        Calendar calendarSet = Calendar.getInstance(TimeZone.getTimeZone("Asia/Tokyo"));
+        calendarSet.set(Calendar.HOUR_OF_DAY, 15);
+        calendarSet.set(Calendar.MINUTE, 0);
+        calendarSet.set(Calendar.SECOND, 0);
+
+        // 現時刻のCalendar
+        Calendar calendarNow = Calendar.getInstance(TimeZone.getTimeZone("Asia/Tokyo"));
+
+        // 起動する時刻が現時刻より過去の場合は翌日に
+        if(calendarSet.compareTo(calendarNow) <= 0) {
+            calendarSet.add(Calendar.DATE, 1);
+        }
+
+        AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, calendarSet.getTimeInMillis(), pendingIntent);
     }
 
 }
